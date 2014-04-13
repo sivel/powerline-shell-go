@@ -79,9 +79,9 @@ func getGitInformation() (string, bool) {
 	if len(matchStatus) > 0 {
 		status = fmt.Sprintf("%s %s", status, matchStatus[2])
 		if matchStatus[1] == "behind" {
-			status = fmt.Sprintf("%s⇣", status)
+			status = fmt.Sprintf("%s\u21E3", status)
 		} else if matchStatus[1] == "ahead" {
-			status = fmt.Sprintf("%s⇡", status)
+			status = fmt.Sprintf("%s\u21E1", status)
 		}
 	}
 
@@ -101,6 +101,7 @@ type Powerline struct {
 	Network       string
 	Separator     string
 	SeparatorThin string
+	Ellipsis      string
 	Segments      [][]string
 }
 
@@ -149,10 +150,11 @@ func main() {
 		BashTemplate:  "\\[\\e%s\\]",
 		ColorTemplate: "[%s;5;%sm",
 		Reset:         "\\[\\e[0m\\]",
-		Lock:          "",
-		Network:       "",
-		Separator:     "",
-		SeparatorThin: "",
+		Lock:          "\uE0A2",
+		Network:       "\uE0A2",
+		Separator:     "\uE0B0",
+		SeparatorThin: "\uE0B1",
+		Ellipsis:      "\u2026",
 	}
 	cwd, cwdParts := getCurrentWorkingDir()
 	_, _, virtualEnvName := getVirtualEnv()
@@ -166,7 +168,7 @@ func main() {
 	}
 	if len(cwdParts) >= 4 {
 		p.Segments = append(p.Segments, []string{"250", "237", cwdParts[0], p.SeparatorThin, "244"})
-		p.Segments = append(p.Segments, []string{"250", "237", "\u2026", p.SeparatorThin, "244"})
+		p.Segments = append(p.Segments, []string{"250", "237", p.Ellipsis, p.SeparatorThin, "244"})
 		p.Segments = append(p.Segments, []string{"254", "237", cwdParts[len(cwdParts)-1]})
 	} else if len(cwdParts) == 3 {
 		if home {
@@ -174,7 +176,7 @@ func main() {
 		} else {
 			p.Segments = append(p.Segments, []string{"250", "237", cwdParts[1], p.SeparatorThin, "244"})
 		}
-		p.Segments = append(p.Segments, []string{"250", "237", "\u2026", p.SeparatorThin, "244"})
+		p.Segments = append(p.Segments, []string{"250", "237", p.Ellipsis, p.SeparatorThin, "244"})
 		p.Segments = append(p.Segments, []string{"254", "237", cwdParts[len(cwdParts)-1]})
 	} else if len(cwdParts) != 0 {
 		p.Segments = append(p.Segments, []string{"254", "237", cwdParts[len(cwdParts)-1]})
