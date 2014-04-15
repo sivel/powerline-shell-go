@@ -197,5 +197,5 @@ func main() {
 
 	p.Segments = append(p.Segments, []string{"15", "236", "\\$"})
 
-	fmt.Println(p.PrintSegments())
+	fmt.Print(p.PrintSegments())
 }
