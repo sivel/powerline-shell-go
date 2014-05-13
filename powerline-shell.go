@@ -167,7 +167,7 @@ func main() {
 		home = true
 	}
 	if len(cwdParts) >= 4 {
-		p.Segments = append(p.Segments, []string{"250", "237", cwdParts[1], p.SeparatorThin, "244"})
+		p.Segments = append(p.Segments, []string{"250", "237", cwdParts[0], p.SeparatorThin, "244"})
 		p.Segments = append(p.Segments, []string{"250", "237", p.Ellipsis, p.SeparatorThin, "244"})
 		p.Segments = append(p.Segments, []string{"254", "237", cwdParts[len(cwdParts)-1]})
 	} else if len(cwdParts) >= 2 {
