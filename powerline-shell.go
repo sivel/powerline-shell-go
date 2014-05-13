@@ -170,13 +170,15 @@ func main() {
 		p.Segments = append(p.Segments, []string{"250", "237", cwdParts[1], p.SeparatorThin, "244"})
 		p.Segments = append(p.Segments, []string{"250", "237", p.Ellipsis, p.SeparatorThin, "244"})
 		p.Segments = append(p.Segments, []string{"254", "237", cwdParts[len(cwdParts)-1]})
-	} else if len(cwdParts) == 3 {
+	} else if len(cwdParts) >= 2 {
 		if home {
 			p.Segments = append(p.Segments, []string{"250", "237", cwdParts[0], p.SeparatorThin, "244"})
 		} else {
 			p.Segments = append(p.Segments, []string{"250", "237", cwdParts[1], p.SeparatorThin, "244"})
 		}
-		p.Segments = append(p.Segments, []string{"250", "237", p.Ellipsis, p.SeparatorThin, "244"})
+		if len(cwdParts) > 2 {
+			p.Segments = append(p.Segments, []string{"250", "237", p.Ellipsis, p.SeparatorThin, "244"})
+		}
 		p.Segments = append(p.Segments, []string{"254", "237", cwdParts[len(cwdParts)-1]})
 	} else if len(cwdParts) != 0 {
 		p.Segments = append(p.Segments, []string{"254", "237", cwdParts[len(cwdParts)-1]})
