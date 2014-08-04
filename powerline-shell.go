@@ -64,11 +64,11 @@ func getGitInformation() (string, bool) {
 	var status string
 	var staged bool
 	stdout, _ := exec.Command("git", "status", "--ignore-submodules").Output()
-	reBranch := regexp.MustCompile(`^(HEAD|On branch) (\S+)`)
+	reBranch := regexp.MustCompile(`^(HEAD detached at|HEAD detached from|On branch) (\S+)`)
 	matchBranch := reBranch.FindStringSubmatch(string(stdout))
 	if len(matchBranch) > 0 {
 		if matchBranch[2] == "detached" {
-			status = "(Detached)"
+			status = matchBranch[2]
 		} else {
 			status = matchBranch[2]
 		}
