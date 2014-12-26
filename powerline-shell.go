@@ -16,7 +16,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -25,6 +24,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/sivel/powerline-shell-go/powerline"
 )
 
 func getCurrentWorkingDir() (string, []string) {
@@ -33,6 +34,7 @@ func getCurrentWorkingDir() (string, []string) {
 		log.Fatal(err)
 	}
 	userDir := strings.Replace(dir, os.Getenv("HOME"), "~", 1)
+	userDir = strings.TrimSuffix(userDir, "/")
 	parts := strings.Split(userDir, "/")
 	return dir, parts
 }
@@ -93,111 +95,92 @@ func getGitInformation() (string, bool) {
 	return status, staged
 }
 
-type Powerline struct {
-	BashTemplate  string
-	ColorTemplate string
-	Reset         string
-	Lock          string
-	Network       string
-	Separator     string
-	SeparatorThin string
-	Ellipsis      string
-	Segments      [][]string
-}
-
-func (p *Powerline) Segment(content string, fg string, bg string) string {
-	foreground := fmt.Sprintf(p.BashTemplate, fmt.Sprintf(p.ColorTemplate, "38", fg))
-	background := fmt.Sprintf(p.BashTemplate, fmt.Sprintf(p.ColorTemplate, "48", bg))
-	return fmt.Sprintf("%s%s %s", foreground, background, content)
-}
-
-func (p *Powerline) Color(prefix string, code string) string {
-	return fmt.Sprintf(p.BashTemplate, fmt.Sprintf(p.ColorTemplate, prefix, code))
-}
-
-func (p *Powerline) ForegroundColor(code string) string {
-	return p.Color("38", code)
-}
-
-func (p *Powerline) BackgroundColor(code string) string {
-	return p.Color("48", code)
-}
-
-func (p *Powerline) PrintSegments() string {
-	var nextBackground string
-	var buffer bytes.Buffer
-	for i, Segment := range p.Segments {
-		if (i + 1) == len(p.Segments) {
-			nextBackground = p.Reset
-		} else {
-			nextBackground = p.BackgroundColor(p.Segments[i+1][1])
-		}
-		if len(Segment) == 3 {
-			buffer.WriteString(fmt.Sprintf("%s%s %s %s%s%s", p.ForegroundColor(Segment[0]), p.BackgroundColor(Segment[1]), Segment[2], nextBackground, p.ForegroundColor(Segment[1]), p.Separator))
-		} else {
-			buffer.WriteString(fmt.Sprintf("%s%s %s %s%s%s", p.ForegroundColor(Segment[0]), p.BackgroundColor(Segment[1]), Segment[2], nextBackground, p.ForegroundColor(Segment[4]), Segment[3]))
-		}
-	}
-
-	buffer.WriteString(p.Reset)
-
-	return buffer.String()
-}
-
-func main() {
+func addCwd(cwdParts []string, ellipsis string, separator string) [][]string {
+	segments := [][]string{}
 	home := false
-	p := Powerline{
-		BashTemplate:  "\\[\\e%s\\]",
-		ColorTemplate: "[%s;5;%sm",
-		Reset:         "\\[\\e[0m\\]",
-		Lock:          "\uE0A2",
-		Network:       "\uE0A2",
-		Separator:     "\uE0B0",
-		SeparatorThin: "\uE0B1",
-		Ellipsis:      "\u2026",
-	}
-	cwd, cwdParts := getCurrentWorkingDir()
-	_, _, virtualEnvName := getVirtualEnv()
-	if virtualEnvName != "" {
-		p.Segments = append(p.Segments, []string{"00", "35", virtualEnvName})
-	}
 	if cwdParts[0] == "~" {
 		cwdParts = cwdParts[1:len(cwdParts)]
-		p.Segments = append(p.Segments, []string{"15", "31", "~"})
 		home = true
 	}
-	if len(cwdParts) >= 4 {
-		p.Segments = append(p.Segments, []string{"250", "237", cwdParts[0], p.SeparatorThin, "244"})
-		p.Segments = append(p.Segments, []string{"250", "237", p.Ellipsis, p.SeparatorThin, "244"})
-		p.Segments = append(p.Segments, []string{"254", "237", cwdParts[len(cwdParts)-1]})
-	} else if len(cwdParts) >= 2 {
-		if home {
-			p.Segments = append(p.Segments, []string{"250", "237", cwdParts[0], p.SeparatorThin, "244"})
-		} else {
-			p.Segments = append(p.Segments, []string{"250", "237", cwdParts[1], p.SeparatorThin, "244"})
-		}
+
+	if home {
+		segments = append(segments, []string{"015", "031", "~"})
+
 		if len(cwdParts) > 2 {
-			p.Segments = append(p.Segments, []string{"250", "237", p.Ellipsis, p.SeparatorThin, "244"})
+			segments = append(segments, []string{"250", "237", cwdParts[0], separator, "244"})
+			segments = append(segments, []string{"250", "237", ellipsis, separator, "244"})
+		} else if len(cwdParts) == 2 {
+			segments = append(segments, []string{"250", "237", cwdParts[0], separator, "244"})
 		}
-		p.Segments = append(p.Segments, []string{"254", "237", cwdParts[len(cwdParts)-1]})
-	} else if len(cwdParts) != 0 {
-		p.Segments = append(p.Segments, []string{"254", "237", cwdParts[len(cwdParts)-1]})
+	} else {
+		if len(cwdParts[len(cwdParts)-1]) == 0 {
+			segments = append(segments, []string{"250", "237", "/"})
+		}
+
+		if len(cwdParts) > 3 {
+			segments = append(segments, []string{"250", "237", cwdParts[1], separator, "244"})
+			segments = append(segments, []string{"250", "237", ellipsis, separator, "244"})
+		} else if len(cwdParts) > 2 {
+			segments = append(segments, []string{"250", "237", cwdParts[1], separator, "244"})
+		}
 	}
 
+	if len(cwdParts) != 0 && len(cwdParts[len(cwdParts)-1]) > 0 {
+		segments = append(segments, []string{"250", "237", cwdParts[len(cwdParts)-1]})
+	}
+
+	return segments
+}
+
+func addVirtulEnvName() []string {
+	_, _, virtualEnvName := getVirtualEnv()
+	if virtualEnvName != "" {
+		return []string{"000", "035", virtualEnvName}
+	}
+
+	return nil
+}
+
+func addLock(cwd string, lock string) []string {
 	if !isWritableDir(cwd) {
-		p.Segments = append(p.Segments, []string{"254", "124", p.Lock})
+		return []string{"254", "124", lock}
 	}
 
+	return nil
+}
+
+func addGitInfo() []string {
 	gitStatus, gitStaged := getGitInformation()
 	if gitStatus != "" {
 		if gitStaged {
-			p.Segments = append(p.Segments, []string{"15", "161", gitStatus})
+			return []string{"015", "161", gitStatus}
 		} else {
-			p.Segments = append(p.Segments, []string{"0", "148", gitStatus})
+			return []string{"000", "148", gitStatus}
 		}
+	} else {
+		return nil
+	}
+}
+
+func addDollarPrompt() []string {
+	return []string{"015", "236", "\\$"}
+}
+
+func main() {
+	shell := "bash"
+
+	if len(os.Args) > 1 {
+		shell = os.Args[1]
 	}
 
-	p.Segments = append(p.Segments, []string{"15", "236", "\\$"})
+	p := powerline.NewPowerline(shell)
+	cwd, cwdParts := getCurrentWorkingDir()
+
+	p.AppendSegment(addVirtulEnvName())
+	p.AppendSegments(addCwd(cwdParts, p.Ellipsis, p.SeparatorThin))
+	p.AppendSegment(addLock(cwd, p.Lock))
+	p.AppendSegment(addGitInfo())
+	p.AppendSegment(addDollarPrompt())
 
 	fmt.Print(p.PrintSegments())
 }
