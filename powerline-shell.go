@@ -28,6 +28,64 @@ import (
 	"github.com/sivel/powerline-shell-go/powerline"
 )
 
+type Colors struct {
+	HomeFG           string
+	HomeBG           string
+	CwdFG            string
+	CwdSeparatorThin string
+	CwdBG            string
+	VirtualEnvFG     string
+	VirtualEnvBG     string
+	LockFG           string
+	LockBG           string
+	GitFG            string
+	GitBG            string
+	GitStagedFG      string
+	GitStagedBG      string
+	PromptFG         string
+	PromptBG         string
+}
+
+func NewColors(pallet string) Colors {
+	if pallet == "light" {
+		return Colors{
+			HomeFG:           "000",
+			HomeBG:           "166",
+			CwdFG:            "237",
+			CwdSeparatorThin: "244",
+			CwdBG:            "250",
+			VirtualEnvFG:     "015",
+			VirtualEnvBG:     "161",
+			LockFG:           "254",
+			LockBG:           "080",
+			GitFG:            "015",
+			GitBG:            "055",
+			GitStagedFG:      "000",
+			GitStagedBG:      "035",
+			PromptFG:         "000",
+			PromptBG:         "250",
+		}
+	}
+
+	return Colors{
+		HomeFG:           "015",
+		HomeBG:           "031",
+		CwdFG:            "250",
+		CwdSeparatorThin: "244",
+		CwdBG:            "237",
+		VirtualEnvFG:     "000",
+		VirtualEnvBG:     "035",
+		LockFG:           "254",
+		LockBG:           "124",
+		GitFG:            "000",
+		GitBG:            "148",
+		GitStagedFG:      "015",
+		GitStagedBG:      "161",
+		PromptFG:         "015",
+		PromptBG:         "236",
+	}
+}
+
 func getCurrentWorkingDir() (string, []string) {
 	dir, err := filepath.Abs(".")
 	if err != nil {
@@ -95,7 +153,7 @@ func getGitInformation() (string, bool) {
 	return status, staged
 }
 
-func addCwd(cwdParts []string, ellipsis string, separator string) [][]string {
+func addCwd(colors Colors, cwdParts []string, ellipsis string, separator string) [][]string {
 	segments := [][]string{}
 	home := false
 	if cwdParts[0] == "~" {
@@ -104,83 +162,89 @@ func addCwd(cwdParts []string, ellipsis string, separator string) [][]string {
 	}
 
 	if home {
-		segments = append(segments, []string{"015", "031", "~"})
+		segments = append(segments, []string{colors.HomeFG, colors.HomeBG, "~"})
 
 		if len(cwdParts) > 2 {
-			segments = append(segments, []string{"250", "237", cwdParts[0], separator, "244"})
-			segments = append(segments, []string{"250", "237", ellipsis, separator, "244"})
+			segments = append(segments, []string{colors.CwdFG, colors.CwdBG, cwdParts[0], separator, colors.CwdSeparatorThin})
+			segments = append(segments, []string{colors.CwdFG, colors.CwdBG, ellipsis, separator, colors.CwdSeparatorThin})
 		} else if len(cwdParts) == 2 {
-			segments = append(segments, []string{"250", "237", cwdParts[0], separator, "244"})
+			segments = append(segments, []string{colors.CwdFG, colors.CwdBG, cwdParts[0], separator, colors.CwdSeparatorThin})
 		}
 	} else {
 		if len(cwdParts[len(cwdParts)-1]) == 0 {
-			segments = append(segments, []string{"250", "237", "/"})
+			segments = append(segments, []string{colors.CwdFG, colors.CwdBG, "/"})
 		}
 
 		if len(cwdParts) > 3 {
-			segments = append(segments, []string{"250", "237", cwdParts[1], separator, "244"})
-			segments = append(segments, []string{"250", "237", ellipsis, separator, "244"})
+			segments = append(segments, []string{colors.CwdFG, colors.CwdBG, cwdParts[1], separator, colors.CwdSeparatorThin})
+			segments = append(segments, []string{colors.CwdFG, colors.CwdBG, ellipsis, separator, colors.CwdSeparatorThin})
 		} else if len(cwdParts) > 2 {
-			segments = append(segments, []string{"250", "237", cwdParts[1], separator, "244"})
+			segments = append(segments, []string{colors.CwdFG, colors.CwdBG, cwdParts[1], separator, colors.CwdSeparatorThin})
 		}
 	}
 
 	if len(cwdParts) != 0 && len(cwdParts[len(cwdParts)-1]) > 0 {
-		segments = append(segments, []string{"250", "237", cwdParts[len(cwdParts)-1]})
+		segments = append(segments, []string{colors.CwdFG, colors.CwdBG, cwdParts[len(cwdParts)-1]})
 	}
 
 	return segments
 }
 
-func addVirtulEnvName() []string {
+func addVirtulEnvName(colors Colors) []string {
 	_, _, virtualEnvName := getVirtualEnv()
 	if virtualEnvName != "" {
-		return []string{"000", "035", virtualEnvName}
+		return []string{colors.VirtualEnvFG, colors.VirtualEnvBG, virtualEnvName}
 	}
 
 	return nil
 }
 
-func addLock(cwd string, lock string) []string {
+func addLock(colors Colors, cwd string, lock string) []string {
 	if !isWritableDir(cwd) {
-		return []string{"254", "124", lock}
+		return []string{colors.LockFG, colors.LockBG, lock}
 	}
 
 	return nil
 }
 
-func addGitInfo() []string {
+func addGitInfo(colors Colors) []string {
 	gitStatus, gitStaged := getGitInformation()
 	if gitStatus != "" {
 		if gitStaged {
-			return []string{"015", "161", gitStatus}
+			return []string{colors.GitStagedFG, colors.GitStagedBG, gitStatus}
 		} else {
-			return []string{"000", "148", gitStatus}
+			return []string{colors.GitFG, colors.GitBG, gitStatus}
 		}
 	} else {
 		return nil
 	}
 }
 
-func addDollarPrompt() []string {
-	return []string{"015", "236", "\\$"}
+func addDollarPrompt(colors Colors) []string {
+	return []string{colors.PromptFG, colors.PromptBG, "\\$"}
 }
 
 func main() {
 	shell := "bash"
+	pallet := "dark"
 
 	if len(os.Args) > 1 {
 		shell = os.Args[1]
+		if len(os.Args) == 3 {
+			pallet = os.Args[2]
+		}
 	}
 
 	p := powerline.NewPowerline(shell)
 	cwd, cwdParts := getCurrentWorkingDir()
 
-	p.AppendSegment(addVirtulEnvName())
-	p.AppendSegments(addCwd(cwdParts, p.Ellipsis, p.SeparatorThin))
-	p.AppendSegment(addLock(cwd, p.Lock))
-	p.AppendSegment(addGitInfo())
-	p.AppendSegment(addDollarPrompt())
+	colors := NewColors(pallet)
+
+	p.AppendSegment(addVirtulEnvName(colors))
+	p.AppendSegments(addCwd(colors, cwdParts, p.Ellipsis, p.SeparatorThin))
+	p.AppendSegment(addLock(colors, cwd, p.Lock))
+	p.AppendSegment(addGitInfo(colors))
+	p.AppendSegment(addDollarPrompt(colors))
 
 	fmt.Print(p.PrintSegments())
 }
