@@ -166,6 +166,14 @@ func addDollarPrompt() []string {
 	return []string{"015", "236", "\\$"}
 }
 
+func addSsh(lock string) []string {
+	if os.Getenv("SSH_CLIENT") != "" {
+		return []string{"000", "166", lock}
+	} else {
+		return nil
+	}
+}
+
 func main() {
 	shell := "bash"
 
@@ -176,6 +184,7 @@ func main() {
 	p := powerline.NewPowerline(shell)
 	cwd, cwdParts := getCurrentWorkingDir()
 
+	p.AppendSegment(addSsh(p.Lock))
 	p.AppendSegment(addVirtulEnvName())
 	p.AppendSegments(addCwd(cwdParts, p.Ellipsis, p.SeparatorThin))
 	p.AppendSegment(addLock(cwd, p.Lock))
